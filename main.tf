@@ -79,6 +79,6 @@ resource "aws_acm_certificate_validation" "this" {
 
 resource "aws_lb_listener_certificate" "this" {
   for_each        = var.certificates
-  certificate_arn = aws_acm_certificate.this[each.key].arn
+  certificate_arn = aws_acm_certificate_validation.this[each.key].certificate_arn
   listener_arn    = try(each.value.listener_arn, var.load_balancer_listener_arn)
 }
