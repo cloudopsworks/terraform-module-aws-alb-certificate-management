@@ -48,7 +48,7 @@ resource "aws_acm_certificate" "this" {
 
 resource "aws_route53_record" "validation" {
   for_each = merge([
-    for k in local.domain_validated : {
+    for k in toset(local.domain_validated) : {
       for dvo in aws_acm_certificate.this[k].domain_validation_options : "${k}-${dvo.domain_name}" => {
         name  = dvo.resource_record_name
         value = dvo.resource_record_value
@@ -65,7 +65,7 @@ resource "aws_route53_record" "validation" {
 }
 
 resource "aws_acm_certificate_validation" "this" {
-  for_each        = local.domain_validated
+  for_each        = toset(local.domain_validated)
   certificate_arn = aws_acm_certificate.this[each.key].arn
   validation_record_fqdns = [
     for dvo in aws_acm_certificate.this[each.key].domain_validation_options :
