@@ -23,3 +23,13 @@ output "certificates" {
     }
   }
 }
+
+output "listener_certificates" {
+  value = {
+    for cert in aws_lb_listener_certificate.this : cert.id => {
+      id              = cert.id
+      certificate_arn = cert.certificate_arn
+      listener_arn    = cert.listener_arn
+    }
+  }
+}
