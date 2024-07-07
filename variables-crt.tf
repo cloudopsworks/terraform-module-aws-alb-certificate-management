@@ -27,3 +27,9 @@ variable "certificates" {
   type        = any
   default     = {}
 }
+
+variable "load_balancer_listener_arn" {
+  description = "The ARN of the load balancer to associate with the certificates."
+  type        = string
+  default     = ""
+}
