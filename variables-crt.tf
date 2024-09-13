@@ -33,3 +33,15 @@ variable "load_balancer_listener_arn" {
   type        = string
   default     = ""
 }
+
+variable "load_balancer_listener_port" {
+  description = "The port of the load balancer to associate with the certificates."
+  type        = number
+  default     = -1
+}
+
+variable "lb_arn" {
+  description = "The ARN of the load balancer to associate with the certificates."
+  type        = string
+  default     = ""
+}
