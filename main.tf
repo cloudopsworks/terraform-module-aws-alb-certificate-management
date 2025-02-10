@@ -12,6 +12,7 @@ locals {
 }
 
 data "aws_route53_zone" "cert_zone" {
+  count        = var.external_dns_zone == false ? 1 : 0
   name         = var.dns_zone_domain != "" ? var.dns_zone_domain : null
   private_zone = var.dns_zone_domain != "" ? var.private_dns_zone : null
   zone_id      = var.dns_zone_id != "" ? var.dns_zone_id : null
@@ -39,7 +40,10 @@ resource "aws_acm_certificate" "this" {
 
   tags = merge(
     local.all_tags,
-    try(each.value.tags, {})
+    try(each.value.tags, {}),
+    {
+      Name = "${each.key}-${local.system_name}"
+    }
   )
   lifecycle {
     create_before_destroy = true
@@ -53,7 +57,7 @@ resource "aws_route53_record" "validation" {
         name  = dvo.resource_record_name
         value = dvo.resource_record_value
         type  = dvo.resource_record_type
-      } if endswith(dvo.domain_name, var.dns_zone_domain) == true
+      } if endswith(dvo.domain_name, var.dns_zone_domain) == true && var.external_dns_zone == false
     }
   ]...)
   allow_overwrite = true
@@ -61,7 +65,7 @@ resource "aws_route53_record" "validation" {
   records         = [each.value.value]
   ttl             = 300
   type            = each.value.type
-  zone_id         = data.aws_route53_zone.cert_zone.id
+  zone_id         = data.aws_route53_zone.cert_zone[0].id
 }
 
 resource "aws_acm_certificate_validation" "this" {
