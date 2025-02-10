@@ -22,6 +22,12 @@ variable "private_dns_zone" {
   default     = false
 }
 
+variable "external_dns_zone" {
+  description = "If true, the DNS zone is external and assumed no local Route53 validation required."
+  type        = bool
+  default     = false
+}
+
 variable "certificates" {
   description = "The certificates to create."
   type        = any
