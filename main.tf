@@ -28,9 +28,11 @@ resource "aws_acm_certificate" "this" {
   subject_alternative_names = try(each.value.subject_alternative_names, [])
   key_algorithm             = try(each.value.key_algorithm, "RSA_2048")
   dynamic "options" {
-    for_each = try(each.value.options, [])
+    for_each = length(try(each.value.options, {})) > 0 ? [1] : []
     content {
-      certificate_transparency_logging_preference = options.value.certificate_transparency_logging_preference ? "ENABLE" : "DISABLE"
+      certificate_transparency_logging_preference = try(each.value.options.certificate_transparency_logging_preference, null) != null ? (
+        each.value.options.certificate_transparency_logging_preference ? "ENABLE" : "DISABLE"
+      ) : null
     }
   }
   dynamic "validation_option" {

@@ -31,6 +31,25 @@ variable "external_dns_zone" {
   default     = false
 }
 
+## certificates configuration - YAML format
+# certificates:
+#  <certificate_name>:
+#    domain_name: <domain_name>
+#    subject_alternative_names:   # (optional) list of alternative domain names
+#      - <alt_domain_name_1>
+#      - <alt_domain_name_2>
+#    validation_method: <DNS or EMAIL>
+#    validation_domain: <validation_domain> # (optional) domain for validation, defaults to domain_name
+#    key_algorithm: <RSA_2048 or ECDSA_P256> # (optional) defaults to RSA_2048
+#    validation_options:                       # (optional) list of validation options
+#      - domain_name: <validation_domain_name>
+#        validation_domain: <validation_domain> # (optional) domain for validation, defaults to domain_name
+#    tags:                          # (optional) tags to apply to the certificate
+#      <tag_name>: <certificate_name>
+#    listener_port: <port> # (optional) port to associate with the certificate, defaults to load_balancer_listener_port
+#    listener_arn: <arn> # (optional) ARN of the listener to associate with the certificate, defaults to empty
+#    options:                     # (optional) options for the certificate
+#      certificate_transparency_logging_preference: true | false # (optional) defaults to not set
 variable "certificates" {
   description = "The certificates to create."
   type        = any
