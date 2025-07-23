@@ -1,4 +1,4 @@
-name: Terraform Transit Gateway Module
+name: Terraform Module for AWS ALB Certificate Management
 #logo: logo/logo.jpg
 
 license: "APACHE2"
@@ -8,23 +8,101 @@ copyrights:
     url: "https://cloudops.works"
     year: "2024"
 
-github_repo: cloudopsworks/terraform-module-aws-vpc-setup
+github_repo: cloudopsworks/terraform-module-aws-alb-certificate-management
 
 description: |-
-  VPC Module for setting up transit gateway with ResourceAccessMananger support.
+  Terraform module for AWS Application Load Balancer (ALB) certificate management. This module simplifies the process of creating and managing SSL/TLS certificates through AWS Certificate Manager (ACM) and attaching them to ALB listeners.
 
 # Introduction to the project
-#introduction: |-
-#  This is an introduction.
+introduction: |-
+  This module provides automated management of SSL/TLS certificates for AWS Application Load Balancers. It handles:
+  - Certificate creation through AWS Certificate Manager (ACM)
+  - DNS validation through Route53
+  - Certificate attachment to ALB listeners
+  - Support for multiple domains and subject alternative names
+  - Flexible validation methods (DNS/EMAIL)
+  - Custom certificate configurations
 
 # How to use this project
-#usage: |-
+usage: |-
+  The module can be used with either terraform directly or terragrunt. Certificate configurations are provided in YAML format:
+
+  certificates:
+    main-cert:
+      domain_name: example.com
+      subject_alternative_names:
+        - www.example.com
+        - api.example.com
+      validation_method: DNS
+      key_algorithm: RSA_2048
+      tags:
+        Environment: production
+      listener_port: 443
+
+  Required variables:
+    - dns_zone_domain or dns_zone_id
+    - certificates configuration
+    - load_balancer information (arn or listener details)
 
 # Example usage
-#examples: |-
+examples: |-
+  Terragrunt configuration (terragrunt.hcl):
+  ```hcl
+  include {
+    path = find_in_parent_folders()
+  }
+
+  terraform {
+    source = "git::https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git?ref=v1.0.0"
+  }
+
+  inputs = {
+    dns_zone_domain = "example.com"
+    certificates = {
+      main = {
+        domain_name = "api.example.com"
+        subject_alternative_names = ["*.api.example.com"]
+        validation_method = "DNS"
+        listener_port = 443
+      }
+    }
+    lb_arn = "arn:aws:elasticloadbalancing:region:account:loadbalancer/app/my-alb/1234567890"
+  }
+  ```
 
 # How to get started quickly
-#quickstart: |-
+quickstart: |-
+  1. Ensure you have:
+     - AWS credentials configured
+     - Terraform (>= 0.13) installed
+     - Domain in Route53 (if using DNS validation)
+     - Existing ALB
+
+  2. Create terragrunt.hcl with minimal configuration:
+     ```hcl
+     terraform {
+       source = "git::https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git?ref=v1.0.0"
+     }
+
+     inputs = {
+       dns_zone_domain = "example.com"
+       certificates = {
+         main = {
+           domain_name = "example.com"
+           validation_method = "DNS"
+         }
+       }
+       lb_arn = "<your-alb-arn>"
+       load_balancer_listener_port = 443
+     }
+     ```
+
+  3. Run:
+     ```bash
+     terragrunt init
+     terragrunt plan
+     terragrunt apply
+     ```
 
 include:
   - "docs/targets.md"
