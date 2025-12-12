@@ -14,21 +14,6 @@ locals {
   ]
 }
 
-data "aws_route53_zone" "cert_zone" {
-  count        = var.external_dns_zone == false ? 1 : 0
-  name         = var.dns_zone_domain != "" ? var.dns_zone_domain : null
-  private_zone = var.dns_zone_domain != "" ? var.private_dns_zone : null
-  zone_id      = var.dns_zone_id != "" ? var.dns_zone_id : null
-}
-
-data "aws_route53_zone" "cross_zone" {
-  count        = var.cross_account == true && var.external_dns_zone == false ? 1 : 0
-  provider     = aws.cross_account
-  name         = var.dns_zone_domain != "" ? var.dns_zone_domain : null
-  private_zone = var.dns_zone_domain != "" ? var.private_dns_zone : null
-  zone_id      = var.dns_zone_id != "" ? var.dns_zone_id : null
-}
-
 resource "aws_acm_certificate" "this" {
   for_each                  = var.certificates
   domain_name               = each.value.domain_name
