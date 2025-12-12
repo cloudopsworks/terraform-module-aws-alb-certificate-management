@@ -15,7 +15,7 @@ provider "aws" {
   alias = "default"
 }
 provider "aws" {
-  alias = "account"
+  alias = "cross_account"
 }
 endef
 define PROVIDER_CHOMP_GCP

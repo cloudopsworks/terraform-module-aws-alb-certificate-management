@@ -73,3 +73,10 @@ variable "lb_arn" {
   type        = string
   default     = ""
 }
+
+variable "cross_account" {
+  description = "The cross account to use for the Certificate domain, aws.cross_account provider must be set to module."
+  type        = bool
+  default     = false
+  nullable    = false
+}
