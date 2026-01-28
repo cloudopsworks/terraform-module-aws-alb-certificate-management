@@ -10,12 +10,12 @@
 
 [![cloudopsworks][logo]](https://cloudops.works/)
 
-# Terraform Module for AWS ALB Certificate Management
+# AWS ALB Certificate Management Terraform Module
 
 
 
 
-Terraform module for AWS Application Load Balancer (ALB) certificate management. This module simplifies the process of creating and managing SSL/TLS certificates through AWS Certificate Manager (ACM) and attaching them to ALB listeners.
+This Terraform module automates the management of SSL/TLS certificates for AWS Application Load Balancers (ALB). It streamlines the process of certificate creation, DNS validation via Route53, and seamless attachment to ALB listeners, supporting both simple and complex multi-domain configurations.
 
 
 ---
@@ -50,13 +50,13 @@ We have [*lots of terraform modules*][terraform_modules] that are Open Source an
 
 ## Introduction
 
-This module provides automated management of SSL/TLS certificates for AWS Application Load Balancers. It handles:
-- Certificate creation through AWS Certificate Manager (ACM)
-- DNS validation through Route53
-- Certificate attachment to ALB listeners
-- Support for multiple domains and subject alternative names
-- Flexible validation methods (DNS/EMAIL)
-- Custom certificate configurations
+Ensuring secure communication is critical for modern web applications. This module provides a robust and flexible way to handle AWS Certificate Manager (ACM) certificates. Key features include:
+- **Automated ACM Lifecycle**: Handles creation and validation of certificates.
+- **Route53 Integration**: Supports automatic DNS validation record creation.
+- **ALB Attachment**: Automatically associates certificates with specified ALB listeners.
+- **Multi-Domain Support**: Easily configure Subject Alternative Names (SANs).
+- **Cross-Account Support**: Ability to manage certificates across different AWS accounts.
+- **Flexible Configuration**: Define certificates using a clean YAML-based structure.
 
 ## Usage
 
@@ -65,53 +65,71 @@ This module provides automated management of SSL/TLS certificates for AWS Applic
 Instead pin to the release tag (e.g. `?ref=vX.Y.Z`) of one of our [latest releases](https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management/releases).
 
 
-The module can be used with either terraform directly or terragrunt. Certificate configurations are provided in YAML format:
+### Terragrunt Implementation
+To use this module with Terragrunt, define your configuration in the `inputs` block. This module is designed to work seamlessly with YAML-like structures within Terragrunt/HCL.
 
+#### Core Variables Table
+| Name | Description | Required | Default |
+|------|-------------|:--------:|---------|
+| `org` | Organization and environment details | Yes | N/A |
+| `certificates` | Map of certificate configurations | Yes | `{}` |
+| `dns_zone_domain` | DNS zone domain for Route53 validation | No | `""` |
+| `lb_arn` | ARN of the target Load Balancer | No | `""` |
+
+#### Full Variables Structure (YAML Format)
+The following represents the complete structure for all available variables:
+
+```yaml
+# Organization settings
+org:
+  organization_name: "example" # (Required) Organization name
+  organization_unit: "devops"  # (Required) Organizational unit
+  environment_type: "production" # (Required) Environment type (e.g., prod, dev)
+  environment_name: "prod"      # (Required) Specific environment name
+
+# DNS Configuration
+dns_zone_domain: "example.com" # (Optional) DNS zone domain. Default: ""
+dns_zone_id: "Z1234567890"    # (Optional) DNS zone ID. Default: ""
+private_dns_zone: false        # (Optional) Is the DNS zone private? Default: false
+external_dns_zone: false       # (Optional) Is the DNS zone external? Default: false
+
+# Load Balancer Integration
+lb_arn: "arn:aws:..."                      # (Optional) ALB ARN. Default: ""
+load_balancer_listener_arn: "arn:aws:..."  # (Optional) Specific listener ARN. Default: ""
+load_balancer_listener_port: 443           # (Optional) Default listener port. Default: -1
+
+# Certificate Definitions
 certificates:
-  main-cert:
-    domain_name: example.com
-    subject_alternative_names:
-      - www.example.com
-      - api.example.com
-    validation_method: DNS
-    key_algorithm: RSA_2048
-    tags:
-      Environment: production
-    listener_port: 443
+  main-cert:                    # (Required) Unique identifier for the certificate
+    domain_name: "example.com"  # (Required) Primary domain name
+    subject_alternative_names:  # (Optional) List of SANs. Default: []
+      - "www.example.com"
+    validation_method: "DNS"    # (Optional) DNS or EMAIL. Default: DNS
+    validation_domain: "example.com" # (Optional) Domain for validation. Default: ""
+    key_algorithm: "RSA_2048"   # (Optional) RSA_2048 or ECDSA_P256. Default: RSA_2048
+    validation_option:          # (Optional) List of validation options for different domains. Default: []
+      - domain_name: "example.com"
+        validation_domain: "example.com" # (Optional) domain for validation, defaults to domain_name
+    listener_port: 443          # (Optional) Port override for this cert. Default: load_balancer_listener_port
+    listener_arn: "arn:aws:..." # (Optional) Specific listener ARN. Default: ""
+    tags:                       # (Optional) Certificate specific tags. Default: {}
+      Environment: "production"
+    options:                    # (Optional) ACM options
+      certificate_transparency_logging_preference: true # (Optional) Default: true
 
-Required variables:
-  - dns_zone_domain or dns_zone_id
-  - certificates configuration
-  - load_balancer information (arn or listener details)
+# Advanced Settings
+is_hub: false        # (Optional) Is this a hub configuration? Default: false
+spoke_def: "001"     # (Optional) Spoke ID (3-digit). Default: "001"
+cross_account: false # (Optional) Cross-account validation. Default: false
+extra_tags: {}       # (Optional) Additional tags for all resources. Default: {}
+```
 
 ## Quick Start
 
-1. Ensure you have:
-   - AWS credentials configured
-   - Terraform (>= 0.13) installed
-   - Domain in Route53 (if using DNS validation)
-   - Existing ALB
-
-2. Create terragrunt.hcl with minimal configuration:
-   ```hcl
-   terraform {
-     source = "git::https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git?ref=v1.0.0"
-   }
-
-   inputs = {
-     dns_zone_domain = "example.com"
-     certificates = {
-       main = {
-         domain_name = "example.com"
-         validation_method = "DNS"
-       }
-     }
-     lb_arn = "<your-alb-arn>"
-     load_balancer_listener_port = 443
-   }
-   ```
-
-3. Run:
+1. **Prepare Terragrunt**: Create a `terragrunt.hcl` in your environment directory.
+2. **Configure Inputs**: Set your `org` details and define your `certificates` map.
+3. **Verify AWS Access**: Ensure your environment has the necessary permissions to manage ACM and Route53.
+4. **Execute**:
    ```bash
    terragrunt init
    terragrunt plan
@@ -121,27 +139,33 @@ Required variables:
 
 ## Examples
 
-Terragrunt configuration (terragrunt.hcl):
-```hcl
-include {
-  path = find_in_parent_folders()
-}
+### Standard Terragrunt Configuration
+Example of a `terragrunt.hcl` using this module for a production environment:
 
+```hcl
 terraform {
   source = "git::https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git?ref=v1.0.0"
 }
 
 inputs = {
-  dns_zone_domain = "example.com"
+  org = {
+    organization_name = "cloudopsworks"
+    organization_unit = "platform"
+    environment_type  = "prod"
+    environment_name  = "main"
+  }
+
+  dns_zone_domain = "cloudops.works"
+  lb_arn          = "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/prod-alb/abc123def456"
+
   certificates = {
-    main = {
-      domain_name = "api.example.com"
-      subject_alternative_names = ["*.api.example.com"]
-      validation_method = "DNS"
-      listener_port = 443
+    "app-prod" = {
+      domain_name               = "app.cloudops.works"
+      subject_alternative_names = ["*.app.cloudops.works"]
+      validation_method         = "DNS"
+      listener_port             = 443
     }
   }
-  lb_arn = "arn:aws:elasticloadbalancing:region:account:loadbalancer/app/my-alb/1234567890"
 }
 ```
 
@@ -255,7 +279,7 @@ Please use the [issue tracker](https://github.com/cloudopsworks/terraform-module
 
 ## Copyrights
 
-Copyright © 2024-2025 [Cloud Ops Works LLC](https://cloudops.works)
+Copyright © 2024-2026 [Cloud Ops Works LLC](https://cloudops.works)
 
 
 
@@ -334,10 +358,10 @@ This project is maintained by [Cloud Ops Works LLC][website].
   [readme_footer_link]: https://cloudops.works/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-alb-certificate-management&utm_content=readme_footer_link
   [readme_commercial_support_img]: https://cloudops.works/readme/commercial-support/img
   [readme_commercial_support_link]: https://cloudops.works/readme/commercial-support/link?utm_source=github&utm_medium=readme&utm_campaign=cloudopsworks/terraform-module-aws-alb-certificate-management&utm_content=readme_commercial_support_link
-  [share_twitter]: https://twitter.com/intent/tweet/?text=Terraform+Module+for+AWS+ALB+Certificate+Management&url=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
-  [share_linkedin]: https://www.linkedin.com/shareArticle?mini=true&title=Terraform+Module+for+AWS+ALB+Certificate+Management&url=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
+  [share_twitter]: https://twitter.com/intent/tweet/?text=AWS+ALB+Certificate+Management+Terraform+Module&url=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
+  [share_linkedin]: https://www.linkedin.com/shareArticle?mini=true&title=AWS+ALB+Certificate+Management+Terraform+Module&url=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
   [share_reddit]: https://reddit.com/submit/?url=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
   [share_facebook]: https://facebook.com/sharer/sharer.php?u=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
   [share_googleplus]: https://plus.google.com/share?url=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
-  [share_email]: mailto:?subject=Terraform+Module+for+AWS+ALB+Certificate+Management&body=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
+  [share_email]: mailto:?subject=AWS+ALB+Certificate+Management+Terraform+Module&body=https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
   [beacon]: https://ga-beacon.cloudops.works/G-7XWMFVFXZT/cloudopsworks/terraform-module-aws-alb-certificate-management?pixel&cs=github&cm=readme&an=terraform-module-aws-alb-certificate-management
