@@ -1,18 +1,33 @@
 # Module configuration
-# Required variables
-{{- range .requiredVariables }}
-{{- if ne .Name "org"}}
-# Description {{ .Description }} , Type: {{ .Type }}
-{{ .Name }}: {{ .DefaultValuePlaceholder }}
-{{- end }}
+# ALB Certificate Management inputs
 
-{{- end }}
-# Optional variables
-{{- range .optionalVariables }}
-{{- if ne .Name "is_hub" "spoke_def" "extra_args" }}
-# Description {{ .Description }} , Type: {{ .Type }}
-#{{ .Name }}: {{ .DefaultValue }}
-{{- end }}
+# DNS Configuration
+dns_zone_domain: "example.com"   # (Required) DNS zone domain for certificate validation. Used if dns_zone_id is not provided.
+#dns_zone_id: ""                 # (Optional) Route53 DNS zone ID. Takes precedence over dns_zone_domain. Default: ""
+#private_dns_zone: false         # (Optional) Set to true if the DNS zone is private. Default: false
+#external_dns_zone: false        # (Optional) Set to true if the DNS zone is external (no local Route53 validation). Default: false
 
-{{- end }}
+# Load Balancer (required when alb_enabled = false and lb_arn is managed externally)
+#load_balancer_listener_arn: ""  # (Optional) ARN of the ALB listener to associate certificates with. Default: ""
+#load_balancer_listener_port: 443 # (Optional) Default listener port for certificate association. Default: -1
 
+# Cross Account configuration
+#cross_account:
+#  enabled: false                 # (Optional) Enable cross-account certificate management. Default: false
+#  alias: "cross_account"         # (Optional) AWS provider alias for cross-account. Default: "cross_account"
+#  region: ""                     # (Optional) AWS region for cross-account. Defaults to global region.
+#  sts_role_arn: ""               # (Optional) STS role ARN for cross-account assumption.
+
+# Certificate Definitions
+certificates:
+  main-cert:                      # (Required) Unique identifier for the certificate
+    domain_name: "example.com"    # (Required) Primary domain name for the certificate
+    #subject_alternative_names:   # (Optional) Additional domain names (SANs). Default: []
+    #  - "www.example.com"
+    #validation_method: "DNS"     # (Optional) Validation method: DNS or EMAIL. Default: DNS
+    #key_algorithm: "RSA_2048"    # (Optional) Key algorithm: RSA_2048 or ECDSA_P256. Default: RSA_2048
+    listener_port: 443            # (Optional) Listener port for this certificate. Default: load_balancer_listener_port
+    #listener_arn: ""             # (Optional) Specific listener ARN override. Default: ""
+    #tags: {}                     # (Optional) Certificate-specific tags. Default: {}
+    #options:                     # (Optional) ACM certificate options.
+    #  certificate_transparency_logging_preference: true
