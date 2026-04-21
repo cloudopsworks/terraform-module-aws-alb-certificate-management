@@ -78,7 +78,7 @@ inputs = {
   {{- end }}
   {{- range .optionalVariables }}
   {{- if not (eq .Name "extra_tags" "is_hub" "spoke_def" "org" "cross_account") }}
-  {{- if and $.alb_enabled (eq .Name lb_arn) }}
+  {{- if and $.alb_enabled (eq .Name "lb_arn") }}
   {{ .Name }} = dependency.alb.outputs.load_balancer_arn
   {{- else }}
   {{ .Name }} = try(local.local_vars.{{ .Name }}, {{ .DefaultValue }})
