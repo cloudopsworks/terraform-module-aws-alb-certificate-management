@@ -7,11 +7,12 @@ dns_zone_domain: "example.com"   # (Required) DNS zone domain for certificate va
 #private_dns_zone: false         # (Optional) Set to true if the DNS zone is private. Default: false
 #external_dns_zone: false        # (Optional) Set to true if the DNS zone is external (no local Route53 validation). Default: false
 
-# Load Balancer (required when alb_enabled = false and lb_arn is managed externally)
+# Load Balancer (lb_arn is auto-wired from ALB dependency when alb_enabled=true in boilerplate)
+#lb_arn: ""                      # (Optional) ARN of the ALB. Set manually when alb_enabled=false. Default: ""
 #load_balancer_listener_arn: ""  # (Optional) ARN of the ALB listener to associate certificates with. Default: ""
-#load_balancer_listener_port: 443 # (Optional) Default listener port for certificate association. Default: -1
+#load_balancer_listener_port: -1 # (Optional) Default listener port for certificate association. Default: -1
 
-# Cross Account configuration
+# Cross-Account configuration (Terragrunt-level; enables aws.cross_account provider alias)
 #cross_account:
 #  enabled: false                 # (Optional) Enable cross-account certificate management. Default: false
 #  alias: "cross_account"         # (Optional) AWS provider alias for cross-account. Default: "cross_account"
@@ -25,9 +26,13 @@ certificates:
     #subject_alternative_names:   # (Optional) Additional domain names (SANs). Default: []
     #  - "www.example.com"
     #validation_method: "DNS"     # (Optional) Validation method: DNS or EMAIL. Default: DNS
+    #validation_domain: ""        # (Optional) Domain for email validation. Default: ""
     #key_algorithm: "RSA_2048"    # (Optional) Key algorithm: RSA_2048 or ECDSA_P256. Default: RSA_2048
+    #validation_option:           # (Optional) Per-domain validation options. Default: []
+    #  - domain_name: "example.com"
+    #    validation_domain: "example.com"
     listener_port: 443            # (Optional) Listener port for this certificate. Default: load_balancer_listener_port
     #listener_arn: ""             # (Optional) Specific listener ARN override. Default: ""
     #tags: {}                     # (Optional) Certificate-specific tags. Default: {}
     #options:                     # (Optional) ACM certificate options.
-    #  certificate_transparency_logging_preference: true
+    #  certificate_transparency_logging_preference: true  # (Optional) Enable certificate transparency logging. Default: true

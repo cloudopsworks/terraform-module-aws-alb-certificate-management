@@ -57,5 +57,5 @@
 
 | Name | Description |
 |------|-------------|
-| <a name="output_certificates"></a> [certificates](#output\_certificates) | n/a |
-| <a name="output_listener_certificates"></a> [listener\_certificates](#output\_listener\_certificates) | n/a |
+| <a name="output_certificates"></a> [certificates](#output\_certificates) | Map of ACM certificate details keyed by certificate resource ID. |
+| <a name="output_listener_certificates"></a> [listener\_certificates](#output\_listener\_certificates) | Map of ALB listener certificate associations keyed by resource ID. |

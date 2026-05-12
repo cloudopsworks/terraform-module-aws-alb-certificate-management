@@ -1,5 +1,5 @@
 ##
-# (c) 2021-2025
+# (c) 2021-2026
 #     Cloud Ops Works LLC - https://cloudops.works/
 #     Find us on:
 #       GitHub: https://github.com/cloudopsworks
@@ -8,6 +8,7 @@
 #
 
 output "certificates" {
+  description = "Map of ACM certificate details keyed by certificate resource ID."
   value = {
     for cert in aws_acm_certificate.this : cert.id => {
       id                        = cert.id
@@ -21,13 +22,13 @@ output "certificates" {
       pending_renewal           = cert.pending_renewal
       renewal_eligibility       = cert.renewal_eligibility
       renewal_summary           = cert.renewal_summary
-      status                    = cert.status
       type                      = cert.type
     }
   }
 }
 
 output "listener_certificates" {
+  description = "Map of ALB listener certificate associations keyed by resource ID."
   value = {
     for cert in aws_lb_listener_certificate.this : cert.id => {
       id              = cert.id
