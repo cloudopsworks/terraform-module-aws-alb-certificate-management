@@ -1,5 +1,5 @@
 ##
-# (c) 2021-2025
+# (c) 2021-2026
 #     Cloud Ops Works LLC - https://cloudops.works/
 #     Find us on:
 #       GitHub: https://github.com/cloudopsworks
@@ -27,7 +27,7 @@ resource "aws_route53_record" "cross_validation" {
 }
 
 resource "aws_acm_certificate_validation" "cross" {
-  for_each        = toset([
+  for_each = toset([
     for k in local.domain_validated : k if var.cross_account
   ])
   certificate_arn = aws_acm_certificate.this[each.key].arn

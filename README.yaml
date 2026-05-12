@@ -9,6 +9,14 @@ copyrights:
 
 github_repo: cloudopsworks/terraform-module-aws-alb-certificate-management
 
+badges:
+  - name: Latest Release
+    image: https://img.shields.io/github/release/cloudopsworks/terraform-module-aws-alb-certificate-management.svg?style=for-the-badge
+    url: https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management/releases/latest
+  - name: Last Updated
+    image: https://img.shields.io/github/last-commit/cloudopsworks/terraform-module-aws-alb-certificate-management.svg?style=for-the-badge
+    url: https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management/commits
+
 description: |-
   This Terraform module automates the management of SSL/TLS certificates for AWS Application Load Balancers (ALB). It streamlines the process of certificate creation, DNS validation via Route53, and seamless attachment to ALB listeners, supporting both simple and complex multi-domain configurations.
 
@@ -24,27 +32,30 @@ introduction: |-
   - **Simplified Boilerplate**: Streamlined Terragrunt boilerplate with spoke-aware architecture and auto-staged git hooks.
 
 usage: |-
-  ### Terragrunt Boilerplate Usage
-  This module ships with a Gruntwork Boilerplate template (`.boilerplate/`) to scaffold a ready-to-use Terragrunt deployment. Generate the implementation with:
+  ### Terragrunt Scaffold Deployment
 
-  ```bash
-  boilerplate --template-url "github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git//.boilerplate" \
-    --output-folder ./my-cert-deployment \
-    --var is_hub=false \
-    --var alb_enabled=true \
-    --var alb_path="../my-alb-instance"
+  This module ships with a Gruntwork Boilerplate template (`.boilerplate/`) to scaffold a ready-to-use Terragrunt deployment. Use Terragrunt's built-in `scaffold` command to bootstrap a new deployment:
+
+  ```sh
+  # 1. Create and enter the target deployment directory
+  mkdir -p <environment>/<region>/<spoke>/alb-certificate
+  cd <environment>/<region>/<spoke>/alb-certificate
+
+  # 2. Scaffold the module (do NOT use --working-dir)
+  terragrunt scaffold github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
+
+  # 3. Edit inputs.yaml with deployment-specific values
+  vi inputs.yaml
+
+  # 4. Apply
+  terragrunt apply
   ```
 
-  #### Boilerplate Variables
-  | Name | Description | Type | Default |
-  |------|-------------|------|---------|
-  | `is_hub` | Is this a hub configuration? | `bool` | `false` |
-  | `tags` | Default tags map | `map` | `{}` |
-  | `alb_enabled` | Enable ALB dependency block for this module | `bool` | `true` |
-  | `alb_path` | Relative path to the ALB Terragrunt module | `string` | `"../alb"` |
+  The scaffold generates `terragrunt.hcl`, `inputs.yaml`, and `local-tags.json` in the target directory.
 
-  #### Module `inputs.yaml` Structure
-  After scaffolding, configure `inputs.yaml` in the generated directory:
+  #### Generated `inputs.yaml`
+
+  All module-specific variables are pre-populated with inline comments:
 
   ```yaml
   # DNS Configuration
@@ -53,11 +64,12 @@ usage: |-
   #private_dns_zone: false          # (Optional) Set true if the DNS zone is private. Default: false
   #external_dns_zone: false         # (Optional) Set true if DNS zone is external (no Route53 validation). Default: false
 
-  # Load Balancer (when alb_enabled = false, provide lb_arn manually)
+  # Load Balancer (lb_arn is auto-wired from ALB dependency when alb_enabled=true)
+  #lb_arn: ""                       # (Optional) ARN of the ALB. Set manually when alb_enabled=false. Default: ""
   #load_balancer_listener_arn: ""   # (Optional) ARN of the ALB listener. Default: ""
-  #load_balancer_listener_port: 443 # (Optional) Default listener port. Default: -1
+  #load_balancer_listener_port: -1  # (Optional) Default listener port. Default: -1
 
-  # Cross Account configuration
+  # Cross-Account configuration (Terragrunt-level; enables aws.cross_account provider alias)
   #cross_account:
   #  enabled: false                 # (Optional) Enable cross-account certificate management. Default: false
   #  alias: "cross_account"         # (Optional) AWS provider alias. Default: "cross_account"
@@ -71,9 +83,9 @@ usage: |-
       #subject_alternative_names:   # (Optional) List of SANs. Default: []
       #  - "www.example.com"
       #validation_method: "DNS"     # (Optional) DNS or EMAIL. Default: DNS
-      #validation_domain: ""        # (Optional) Domain for validation. Default: ""
+      #validation_domain: ""        # (Optional) Domain for email validation. Default: ""
       #key_algorithm: "RSA_2048"    # (Optional) RSA_2048 or ECDSA_P256. Default: RSA_2048
-      #validation_option:           # (Optional) Validation options per domain. Default: []
+      #validation_option:           # (Optional) Per-domain validation options. Default: []
       #  - domain_name: "example.com"
       #    validation_domain: "example.com"
       listener_port: 443            # (Optional) Listener port for this certificate. Default: load_balancer_listener_port
@@ -83,27 +95,87 @@ usage: |-
       #  certificate_transparency_logging_preference: true  # (Optional) Default: true
   ```
 
-  #### Core Module Variables
-  | Name | Description | Required | Default |
-  |------|-------------|:--------:|---------|
-  | `org` | Organization and environment details (from env-inputs.yaml) | Yes | N/A |
-  | `is_hub` | Hub configuration flag | No | `false` |
-  | `spoke_def` | Spoke definition (from spoke-inputs.yaml) | No | — |
-  | `certificates` | Map of ACM certificate configurations | Yes | `{}` |
-  | `dns_zone_domain` | DNS zone domain for Route53 validation | No | `""` |
-  | `dns_zone_id` | Route53 hosted zone ID | No | `""` |
-  | `private_dns_zone` | Use private DNS zone for validation | No | `false` |
-  | `external_dns_zone` | DNS zone is external (skip Route53) | No | `false` |
-  | `lb_arn` | ALB ARN (auto-wired when `alb_enabled=true`) | No | `""` |
-  | `load_balancer_listener_arn` | Specific listener ARN | No | `""` |
-  | `load_balancer_listener_port` | Default listener port | No | `-1` |
-  | `cross_account` | Enable cross-account DNS validation | No | `false` |
-  | `extra_tags` | Additional tags for all resources | No | `{}` |
+  #### Generated `terragrunt.hcl`
+
+  The scaffold produces a `terragrunt.hcl` that loads `inputs.yaml` as `local.local_vars` and wires all module inputs:
+
+  ```hcl
+  locals {
+    local_vars  = yamldecode(file("./inputs.yaml"))
+    spoke_vars  = yamldecode(file(find_in_parent_folders("spoke-inputs.yaml")))
+    region_vars = yamldecode(file(find_in_parent_folders("region-inputs.yaml")))
+    env_vars    = yamldecode(file(find_in_parent_folders("env-inputs.yaml")))
+    global_vars = yamldecode(file(find_in_parent_folders("global-inputs.yaml")))
+
+    local_tags  = jsondecode(file("./local-tags.json"))
+    spoke_tags  = jsondecode(file(find_in_parent_folders("spoke-tags.json")))
+    region_tags = jsondecode(file(find_in_parent_folders("region-tags.json")))
+    env_tags    = jsondecode(file(find_in_parent_folders("env-tags.json")))
+    global_tags = jsondecode(file(find_in_parent_folders("global-tags.json")))
+
+    # Cross-account variables (derived from cross_account object in inputs.yaml)
+    cross_account              = try(local.local_vars.cross_account.enabled, false)
+    cross_account_alias        = try(local.local_vars.cross_account.alias, "cross_account")
+    cross_account_region       = try(local.local_vars.cross_account.region, local.global_vars.default.region)
+    cross_account_sts_role_arn = try(local.local_vars.cross_account.sts_role_arn, local.global_vars.default.sts_role_arn)
+
+    tags = merge(local.global_tags, local.env_tags, local.region_tags, local.spoke_tags, local.local_tags)
+  }
+
+  include "root" {
+    path = find_in_parent_folders("root.hcl")
+  }
+
+  dependency "alb" {
+    config_path = "../alb"
+    mock_outputs_allowed_terraform_commands = ["validate", "destroy"]
+    mock_outputs = {
+      load_balancer_arn      = "arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/alb-1234567890123456/1234567890123456"
+      load_balancer_dns_name = "alb-1234567890123456.us-east-1.elb.amazonaws.com"
+      load_balancer_zone_id  = "Z1234567890123456"
+    }
+  }
+
+  # Auto-generated cross-account provider block (managed by Terragrunt scaffold)
+  # generate "provider_l" { ... }
+
+  terraform {
+    source = "git::https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git?ref=v1.3.1"
+  }
+
+  inputs = {
+    is_hub    = false
+    org       = local.env_vars.org
+    spoke_def = local.spoke_vars.spoke
+
+    dns_zone_domain = local.local_vars.dns_zone_domain
+    certificates    = local.local_vars.certificates
+
+    dns_zone_id                 = try(local.local_vars.dns_zone_id, "")
+    private_dns_zone            = try(local.local_vars.private_dns_zone, false)
+    external_dns_zone           = try(local.local_vars.external_dns_zone, false)
+    load_balancer_listener_arn  = try(local.local_vars.load_balancer_listener_arn, "")
+    load_balancer_listener_port = try(local.local_vars.load_balancer_listener_port, -1)
+    lb_arn                      = dependency.alb.outputs.load_balancer_arn
+
+    cross_account = local.cross_account
+    extra_tags    = local.tags
+  }
+  ```
+
+  #### Boilerplate Variables
+
+  | Name | Description | Type | Default |
+  |------|-------------|------|---------|
+  | `is_hub` | Is this a hub configuration? | `bool` | `false` |
+  | `tags` | Default tags map | `map` | `{}` |
+  | `alb_enabled` | Enable ALB dependency block for this module | `bool` | `true` |
+  | `alb_path` | Relative path to the ALB Terragrunt module | `string` | `"../alb"` |
 
 examples: |-
-  ### Standard Deployment with ALB Dependency (Boilerplate-generated)
+  ### Standard Deployment with ALB Dependency
 
-  After running boilerplate with `alb_enabled=true`, the generated `terragrunt.hcl` wires `lb_arn`
+  After scaffolding with `alb_enabled=true`, the generated `terragrunt.hcl` wires `lb_arn`
   automatically from the ALB module dependency:
 
   ```hcl
@@ -143,7 +215,7 @@ examples: |-
   }
 
   terraform {
-    source = "git::https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git?ref=v1.3.0"
+    source = "git::https://github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git?ref=v1.3.1"
   }
 
   inputs = {
@@ -163,7 +235,7 @@ examples: |-
   ### Cross-Account Certificate Management
 
   Set `cross_account.enabled = true` in `inputs.yaml` to validate certificates against a DNS zone
-  in a different AWS account. The boilerplate generates a provider block automatically:
+  in a different AWS account. The scaffold generates a provider block automatically:
 
   ```yaml
   # inputs.yaml
@@ -183,20 +255,19 @@ examples: |-
   ```
 
 quickstart: |-
-  1. **Generate with Boilerplate**: Scaffold the deployment directory using the bundled boilerplate template.
-     ```bash
-     boilerplate --template-url "github.com/cloudopsworks/terraform-module-aws-alb-certificate-management.git//.boilerplate" \
-       --output-folder ./environments/prod/us-east-1/certs \
-       --var is_hub=false \
-       --var alb_enabled=true \
-       --var alb_path="../prod-alb"
+  1. **Create and enter target directory**:
+     ```sh
+     mkdir -p environments/prod/us-east-1/spoke/alb-certificate
+     cd environments/prod/us-east-1/spoke/alb-certificate
      ```
-  2. **Configure `inputs.yaml`**: Set `dns_zone_domain` and define the `certificates` map.
-  3. **Verify AWS Access**: Ensure the environment has permissions for ACM, Route53, and ELB.
-  4. **Execute**:
-     ```bash
-     terragrunt init
-     terragrunt plan
+  2. **Scaffold the module**:
+     ```sh
+     terragrunt scaffold github.com/cloudopsworks/terraform-module-aws-alb-certificate-management
+     ```
+  3. **Configure `inputs.yaml`**: Set `dns_zone_domain` and define the `certificates` map. Adjust optional settings as needed.
+  4. **Verify AWS Access**: Ensure the environment has permissions for ACM, Route53, and ELB.
+  5. **Apply**:
+     ```sh
      terragrunt apply
      ```
 
