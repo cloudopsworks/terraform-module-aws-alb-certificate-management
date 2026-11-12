@@ -1,27 +1,27 @@
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.4 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.35 |
 
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.4 |
-| <a name="provider_aws.cross_account"></a> [aws.cross\_account](#provider\_aws.cross\_account) | ~> 6.4 |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.35 |
+| <a name="provider_aws.cross_account"></a> [aws.cross\_account](#provider\_aws.cross\_account) | ~> 6.35 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
-| <a name="module_tags"></a> [tags](#module\_tags) | cloudopsworks/tags/local | 1.0.9 |
+| ---- | ------ | ------- |
+| <a name="module_tags"></a> [tags](#module\_tags) | cloudopsworks/tags/local | 1.0.10 |
 
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_acm_certificate.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate) | resource |
 | [aws_acm_certificate_validation.cross](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation) | resource |
 | [aws_acm_certificate_validation.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation) | resource |
@@ -38,7 +38,7 @@
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_certificates"></a> [certificates](#input\_certificates) | The certificates to create. | `any` | `{}` | no |
 | <a name="input_cross_account"></a> [cross\_account](#input\_cross\_account) | The cross account to use for the Certificate domain, aws.cross\_account provider must be set to module. | `bool` | `false` | no |
 | <a name="input_dns_zone_domain"></a> [dns\_zone\_domain](#input\_dns\_zone\_domain) | The DNS zone domain, used if zone\_id is not provided. | `string` | `""` | no |
@@ -56,6 +56,6 @@
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_certificates"></a> [certificates](#output\_certificates) | Map of ACM certificate details keyed by certificate resource ID. |
 | <a name="output_listener_certificates"></a> [listener\_certificates](#output\_listener\_certificates) | Map of ALB listener certificate associations keyed by resource ID. |
